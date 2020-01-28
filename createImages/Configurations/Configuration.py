@@ -1,7 +1,7 @@
 Job = {
     "Batch"           : True,
     "Analysis"        : "DMAnalysis",
-    "Fraction"        : 0.12,
+    "Fraction"        : 0.001,
     "MaxEvents"       : 1234567890,
     "OutputDirectory" : "results/",
     "ImagesDirectory" : "images/"
