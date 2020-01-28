@@ -32,7 +32,6 @@ class Analysis(object):
     def getImageDir(self):
         return self.imageDir
 
-    #Getters and Setters
     def setIsData(self, isData):
         self.isData = isData
 

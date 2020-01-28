@@ -1,4 +1,5 @@
 import math
+from ROOT import TEllipse, TColor
 from matplotlib.patches import Ellipse, Rectangle
 import numpy as np
 
@@ -6,39 +7,59 @@ import numpy as np
 The Object Selection Helpers represent standard object selections that serve as a starting point for
 self defined object selection strategies.
 The selectAndSortContainer function can be used to do selecting and sorting in a one liner.
-The StandardEventCuts function implements three standard cuts used in essentially all analyses.
+The StandardEventCuts function implements a standard cut used in essentially all analyses.
 """
 
 
 # Object Selection Helpers
+def isGoodPhoton(Photon):
+    if not Photon.isTightID(): return False
+    if not Photon.pt() > 25: return False
+    if not Photon.isoetconerel20() < 0.15: return False
+    if not Photon.isoptconerel30() < 0.15: return False
+    return True;
+
 def isGoodLepton(Lepton):
     if (abs(Lepton.pdgId()) == 11 and isGoodElectron(Lepton)): return True;
     if (abs(Lepton.pdgId()) == 13 and isGoodMuon(Lepton)): return True;
     return False;
     
 def isGoodElectron(Lepton):
-    if not Lepton.isTight(): return False
-    if not Lepton.pt() > 25: return False
+    if not Lepton.isTightID(): return False
+    if not Lepton.pt() > 30: return False
     if not Lepton.isoetconerel20() < 0.15: return False
     if not Lepton.isoptconerel30() < 0.15: return False
     return True;
     
 def isGoodMuon(Lepton):
-    if not Lepton.isTight(): return False
-    if not Lepton.pt() > 25: return False
+    if not Lepton.isTightID(): return False
+    if not Lepton.pt() > 30: return False
     if not Lepton.isoetconerel20() < 0.15: return False
     if not Lepton.isoptconerel30() < 0.15: return False
     return True;
+
+#def oneJet(jet):
+#    if jet.
     
 def isGoodJet(jet):
-    if jet.pt() < 25: return False
-    if abs(jet.eta() > 2.5): return False
-    if jet.pt() < 50 and abs(jet.eta() < 2.4) and jet.jvf() < 0.5: return False
+    if jet.pt() < 30: return False
+    if abs(jet.eta()) > 4.5: return False
+    if jet.pt() < 60 and abs(jet.eta()) < 2.4 and jet.jvt() < 0.59: return False
     return True
 
-def mlb(jet,lepton):
-    pstop = jet.tlv() + lepton.tlv()
-    return pstop.M()/10.
+def isGoodFatJet(FatJet):
+    if FatJet.pt() < 250: return False
+    if abs(FatJet.eta()) > 2: return False
+    if FatJet.m() < 40: return False
+    return True
+
+def isGoodTau(Tau):
+    if Tau.pt() < 25: return False
+    if abs(Tau.eta()) > 2.5: return False
+    if not Tau.isTight(): return False
+    #if Tau.nTracks != 1 or Tau.nTracks != 3: return False
+    #if Tau.BDTid < ?: return False
+    return True
 
 # Utility function
 def selectAndSortContainer(container, selectingFunction, sortingFunction):
@@ -47,17 +68,45 @@ def selectAndSortContainer(container, selectingFunction, sortingFunction):
 
 # Event Selection Helpers
 def StandardEventCuts(eventinfo):
-    if not (eventinfo.triggeredByElectron() or eventinfo.triggeredByMuon()): return False
-    if not eventinfo.passGRL(): return False
-    if not eventinfo.hasGoodVertex(): return False
+    if not (eventinfo.triggeredByElectron() or eventinfo.triggeredByMuon() or eventinfo.triggeredByPhoton() or eventinfo.triggeredByTau() or eventinfo.triggeredByDiTau()): return False
     return True;
     
+def mlb(jet,lepton):
+    pstop = jet.tlv() + lepton.tlv()
+    return pstop.M()/10.
+
     
 # Variable Definitions:
 def WTransverseMass(lepton, etmiss):
     return math.sqrt(2*lepton.pt()*etmiss.et()*(1-math.cos(lepton.tlv().DeltaPhi(etmiss.tlv()))));
 
+# Draw Physics Objects as Circles
+def DrawObjectROOT(particle, pt, ptype) :
+    
+    import math
 
+    phiAxis = pt *2.* math.pi / 224. # Ellypse axis
+    etaAxis = pt *9. / 224.
+
+    y = particle.phi()
+    try  :
+        x = particle.eta()
+    except:
+        x = 0
+
+    ellipse = TEllipse(x,y,etaAxis, phiAxis)
+    if 'mltop' in ptype :
+        ellipse.SetLineColor(10000+len(ptype))
+        ellipse.SetLineWidth(2)
+        ellipse.SetFillColorAlpha(20000+len(ptype), 0.0)
+    else :
+        ellipse.SetLineWidth(0)       
+        ellipse.SetFillColor(20000+len(ptype))
+        ellipse.SetFillStyle(1001)
+        
+    return ellipse
+
+## Draw Physics Objects as Circles
 def DrawObject(particle, pt, ptype) :
     
     import math

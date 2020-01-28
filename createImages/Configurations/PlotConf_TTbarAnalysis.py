@@ -1,5 +1,8 @@
+W_str = r"W" + r"\rightarrow" + r"l" + r"\nu_{l}"
+Z_str = r"Z" + r"\rightarrow" + r"l^{+}" + r"l^{-}"
+ttbar_str = r"t" + r"\bar{t}"
 config = {
-"Luminosity": 1000,
+"Luminosity": 10064,
 "InputDirectory": "results",
 
 "Histograms" : {
@@ -18,29 +21,21 @@ config = {
     "lep_z0"             : {},
     "n_jets"             : {},
     "jet_pt"             : {},
-    "jet_m"              : {},
-    "jet_jvf"            : {"y_margin" : 0.4},
     "jet_eta"            : {},
-    "jet_MV1"            : {"y_margin" : 0.3},
-    "vxp_z"              : {},
-    "pvxp_n"             : {},
+    "jet_MV2c10"         : {"y_margin" : 0.3},
 },
 
 "Paintables": {
     "Stack": {
-        "Order"     : ["Diboson", "DrellYan", "W", "Z", "stop", "ttbar"],
+        "Order"     : ["Diboson", "W", "Z", "stop", "ttbar"],
         "Processes" : {                
             "Diboson" : {
                 "Color"         : "#fa7921",
-                "Contributions" : ["WW", "WZ", "ZZ"]},
+                "Contributions" : ["WWlvlv", "WZlvll", "WZlvvv", "ZZllll", "ZZvvll", "WWlvqq", "WZqqll", "WZlvqq", "ZZqqll"]},
                                 
-            "DrellYan": {       
-                "Color"         : "#5bc0eb",
-                "Contributions" : ["DYeeM08to15", "DYeeM15to40", "DYmumuM08to15", "DYmumuM15to40", "DYtautauM08to15", "DYtautauM15to40"]},
-            
             "W": {              
                 "Color"         : "#e55934",
-                "Contributions" : ["WenuJetsBVeto", "WenuWithB", "WenuNoJetsBVeto", "WmunuJetsBVeto", "WmunuWithB", "WmunuNoJetsBVeto", "WtaunuJetsBVeto", "WtaunuWithB", "WtaunuNoJetsBVeto"]},
+                "Contributions" : ["Wplusenu", "Wplusmunu", "Wplustaunu", "Wminusenu", "Wminusmunu", "Wminustaunu"]},
                                 
             "Z": {              
                 "Color"         : "#086788",
@@ -48,16 +43,16 @@ config = {
                   
             "stop": {
                 "Color"         : "#fde74c",
-                "Contributions" : ["stop_tchan_top", "stop_tchan_antitop", "stop_schan", "stop_wtchan"]},
+                "Contributions" : ["single_top_tchan", "single_antitop_tchan", "single_top_wtchan", "single_antitop_wtchan", "single_top_schan", "single_antitop_schan"]},
             
             "ttbar": {
                 "Color"         : "#9bc53d",
-                "Contributions" : ["ttbar_lep", "ttbar_had"]}
+                "Contributions" : ["ttbar_lep"]}
         }
     },
 
     "data" : {
-        "Contributions": ["data_Egamma", "data_Muons"]}
+        "Contributions": ["dataA_1lep.root", "dataB_1lep.root", "dataC_1lep.root", "dataD_1lep.root" ]}
 },
 
 "Depictions": {

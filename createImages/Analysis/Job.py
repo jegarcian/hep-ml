@@ -3,6 +3,7 @@ import glob
 import importlib
 import sys
 import time
+from tqdm import tqdm
 
 import JobStatistics
 
@@ -32,11 +33,11 @@ class Job(object):
 
     #Setup functions
     def setupTree(self):
-      tree = ROOT.TChain("mini")
-      for filename in self.InputFiles:
-        self.log("Adding file: " + filename)
-        tree.Add(filename)
-      return tree
+        tree = ROOT.TChain("mini")
+        for filename in self.InputFiles:
+            self.log("Adding file: " + filename)
+            tree.Add(filename)
+        return tree
                     
     def createAnalysis(self, analysisName):
         analysisName = self.Configuration["Analysis"]
@@ -49,53 +50,51 @@ class Job(object):
     
     #Execution functions                    
     def run(self):
-      self.initialize()
-      self.execute()
-      self.finalize()
+        self.initialize()
+        self.execute()
+        self.finalize()
       
     def initialize(self):
-      self.log("Intialization phase")
-      self.JobStatistics.resetTimer()
-      self.OutputFile = ROOT.TFile.Open(self.OutputFileLocation + ".root","RECREATE")
-      self.InputTree = self.setupTree()
-      self.Analysis  = self.createAnalysis(self.Configuration["Analysis"])
-      self.determineMaxEvents()
-      self.Analysis.doInitialization()
+        self.log("Intialization phase")
+        self.JobStatistics.resetTimer()
+        self.OutputFile = ROOT.TFile.Open(self.OutputFileLocation + ".root","RECREATE")
+        self.InputTree = self.setupTree()
+        self.Analysis  = self.createAnalysis(self.Configuration["Analysis"])
+        self.determineMaxEvents()
+        self.Analysis.doInitialization()
         
     def execute(self):
-      self.log("Now looping over %d events" % self.MaxEvents)
-      
-      step = int(1./self.Configuration["Fraction"])
-
-      for n in xrange(self.MaxEvents):
-        self.JobStatistics.updateStatus(n)
-        self.InputTree.GetEntry(n*step)
-        self.Analysis.doAnalysis()
+        self.log("Now looping over %d events" % self.MaxEvents)
+        step = int(1./self.Configuration["Fraction"])
+#        for n in xrange(self.MaxEvents):
+        for n in tqdm(xrange(self.MaxEvents)):
+            self.JobStatistics.updateStatus(n)
+            self.InputTree.GetEntry(n*step)
+            self.Analysis.doAnalysis()
             
     def finalize(self):
-      self.JobStatistics.updateStatus(self.MaxEvents, True)
-      if not self.Configuration["Batch"]:
-          print ""
-      self.Analysis.doFinalization()
-      self.OutputFile.Close()
-      self.log("finished successfully. Total time: %4.0fs" % self.JobStatistics.elapsedTime())
-
+        self.JobStatistics.updateStatus(self.MaxEvents, True)
+        if not self.Configuration["Batch"]:
+            print ""
+        self.Analysis.doFinalization()
+        self.OutputFile.Close()
+        self.log("finished successfully. Total time: %4.0fs" % self.JobStatistics.elapsedTime())
 
     # Helper functions
     def determineMaxEvents(self):
-      nentries = self.InputTree.GetEntries()
-      if nentries==0:
-        self.log("Empty files! Abort!")
-        sys.exit(1)
+        nentries = self.InputTree.GetEntries()
+        if nentries==0:
+            self.log("Empty files! Abort!")
+            sys.exit(1)
       
-      if self.MaxEvents > nentries:
-        self.MaxEvents = nentries
+        if self.MaxEvents > nentries:
+            self.MaxEvents = nentries
       
-      self.MaxEvents = int(self.MaxEvents*self.Configuration["Fraction"]) 
-      self.JobStatistics.setMaxEvents(self.MaxEvents)
+        self.MaxEvents = int(self.MaxEvents*self.Configuration["Fraction"]) 
+        self.JobStatistics.setMaxEvents(self.MaxEvents)
 
     def log(self, message):
-      print time.ctime() + " Job " + self.Name + ": " + message
+        print time.ctime() + " Job " + self.Name + ": " + message
               
         
 
