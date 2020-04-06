@@ -29,6 +29,15 @@ Simple model using keras
 python simple.py
 ```
 
+
+### Running Custom CNN or Transfer Learning
+
+Use keras to run different types of NN
+
+```
+python run_model.py -m [model]
+```
+
 ### Transfer Learning
 
 Finetuning of commonly used neural nets with Tensorflow. See directory :
