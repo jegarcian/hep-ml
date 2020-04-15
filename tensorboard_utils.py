@@ -30,7 +30,7 @@ def plot_roc_curve(false_pos, true_pos, auc, required_class) :
     return summary
 
 
-def plot_confusion_matrix(cm, classes, title='Confusion matrix', tensor_name = 'MyFigure/image', normalize=False):
+def plot_confusion_matrix(cm, classes, title='Confusion matrix', tensor_name = 'MyFigure/image', normalize=False, saveImg=False):
     ''' 
     Parameters:
     labels                          : This is a lit of labels which will be used to display the axix labels
@@ -51,6 +51,8 @@ def plot_confusion_matrix(cm, classes, title='Confusion matrix', tensor_name = '
     ###fig, ax = matplotlib.figure.Figure()
 
     fig = matplotlib.figure.Figure(figsize=(7, 7), dpi=320, facecolor='w', edgecolor='k')
+    if saveImg :
+        fig = plt.figure(figsize=(7, 7), dpi=320, facecolor='w', edgecolor='k')
     ax = fig.add_subplot(1, 1, 1)
     im = ax.imshow(cm, cmap='Oranges')
     
@@ -74,6 +76,9 @@ def plot_confusion_matrix(cm, classes, title='Confusion matrix', tensor_name = '
         ax.text(j, i, format(cm[i, j], fmt) if cm[i,j]!=0 else '.', horizontalalignment="center", fontsize=20, verticalalignment='center', color= "black")
         
     fig.set_tight_layout(True)
+    if saveImg :
+        fig.set_canvas(plt.gcf().canvas)
+        fig.savefig('confusion_matrix.png')   # save the figure to file
     summary = tfplot.figure.to_summary(fig, tag=tensor_name)
     return summary
 
@@ -107,7 +112,8 @@ class TrainValTensorBoard(TensorBoard):
         class_labels = list(self.val.class_indices.keys())
         print(class_labels,epoch)
 
-        pred = self.model.predict_generator(self.val, self.val.n // self.val.batch_size + 1)
+        self.val.reset()
+        pred = self.model.predict_generator(self.val)#, self.val.n // self.val.batch_size + 1)
         max_pred = np.argmax(pred, axis=1)
         cnf_mat = confusion_matrix(self.val.classes, max_pred)
 
@@ -136,7 +142,7 @@ class TrainValTensorBoard(TensorBoard):
         for name, value in val_logs.items():
             summary = tf.Summary()
             summary_value = summary.value.add()
-            summary_value.simple_value = value.item()
+            summary_value.simple_value = value#.item()
             summary_value.tag = name
             self.val_writer.add_summary(summary, epoch)
         self.val_writer.flush()

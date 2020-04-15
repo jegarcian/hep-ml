@@ -149,6 +149,7 @@ def main():
     parser.add_option("-b", "--batch",       dest="batch",                           help="Set batch per epoch (default: %default)")
     parser.add_option("-e", "--epochs",      dest="epochs",                          help="Number of epochs to run (default: %default)")
     parser.add_option("-v", "--verbose",     dest="verbose",  action="store_true",   help="Print more information (default: %default)")
+    parser.add_option("-t", "--test",        dest="test",     action="store_true",   help="Test weights and model (default: %default)")
     parser.set_defaults(verbose=True, report=False, weights=None, learning=0.00001, epochs=10, batch=None, bn=False, dropout=0.4, model='vgg')
     (options,args) = parser.parse_args()
     # parser.print_help()
@@ -208,33 +209,51 @@ def main():
     # Load pre-trained weights if needed
     if options.weights :
         try :
-            print(" Loading weights : ",options.weights)  
+            print("\n Loading weights : ",options.weights)  
             model.load_weights(options.weights)  
+            print(" ... done  \n")
         except :
             print (" Error Loading weights")
             sys.exit()
 
-    # Create objects for tensorboard, called by training
-    tensorboard = TrainValTensorBoard(log_dir=logs_dir, write_graph=True, update_freq=500, val=val_it)
 
-    # Run the model 
-    history = model.fit_generator(train_it, epochs = int(options.epochs), steps_per_epoch=STEP_SIZE_TRAIN, validation_steps=STEP_SIZE_VALID, validation_data=val_it, callbacks=[tensorboard])
+    if not options.test :
+        # Create objects for tensorboard, called by training
+        tensorboard = TrainValTensorBoard(log_dir=logs_dir, write_graph=True, update_freq=500, val=val_it)
+
+        # Run the model 
+        history = model.fit_generator(train_it, epochs = int(options.epochs), steps_per_epoch=STEP_SIZE_TRAIN, validation_steps=STEP_SIZE_VALID, validation_data=val_it, callbacks=[tensorboard])
     
-    # Save model training
-    model_weights_path = now.strftime('simple_fc_model.%d%m%H%M.h5')
-    model.save_weights(model_weights_path)
+        # Save model training
+        model_weights_path = now.strftime('weights_'+options.model+'.%d%m%H%M.h5')
+        model.save_weights(model_weights_path)
 
-
+    
+    printWrong = False
     # Create report 
-    if options.report :
+    if options.report or options.test :
         target_names = list(val_it.class_indices.keys())
-        Y_pred = model.predict_generator(val_it, val_it.n//val_it.batch_size )
+        print(" Evaluating Predictions \n")
+        Y_pred = model.predict_generator(val_it)#, val_it.n//val_it.batch_size )
         y_pred = np.argmax(Y_pred, axis=1)
-        print(classification_report(val_it.classes, y_pred, target_names=target_names))
 
-        for x in range(0,len(y_pred)) :
-            if val_it.classes[x] != y_pred[x] :
-                print("File : ",val_it.filenames[x], str(val_it.classes[x]), str(y_pred[x]), str(Y_pred[x]))
+        from sklearn.metrics import confusion_matrix
+        from tensorboard_utils import plot_confusion_matrix
+        
+        print(" Computing Confusion Matrix \n")
+        cnf_mat = confusion_matrix(val_it.classes, y_pred)
+
+        print(cnf_mat)
+
+        conf_matrix_norm = plot_confusion_matrix(cm=cnf_mat,classes=target_names,
+                                                 normalize=True, tensor_name='Confusion Matrix Normalized',saveImg=True)
+        
+        print(classification_report(val_it.classes, y_pred, target_names=target_names))
+        
+        if printWrong :
+            for x in range(0,len(y_pred)) :
+                if val_it.classes[x] != y_pred[x] :
+                    print("File : ",val_it.filenames[x], str(val_it.classes[x]), str(y_pred[x]), str(Y_pred[x]))
 
     #from keras.models import load_model
     #pred = model.predict_generator(val_it, val_it.n // val_it.batch_size )
