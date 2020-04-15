@@ -10,6 +10,9 @@ from keras import models
 from keras import optimizers
 from keras.callbacks import TensorBoard
 from keras.preprocessing.image import ImageDataGenerator
+from keras import backend as K
+from keras.layers.normalization import BatchNormalization
+from keras.models import model_from_json
 
 import tensorflow as tf
 
@@ -57,13 +60,19 @@ def build_model(xsize=224, ysize=224, channels=3, nlabels=2, lr=0.000001, bn=Fal
     if mtype == 'resnet' :
         # Transfer Learning using ResNet50
         mod_conv = ResNet50(weights='imagenet', include_top=False, input_shape=(xsize, ysize, channels))
+        output = mod_conv.layers[-1].output
+        mod_conv = models.Model(mod_conv.input, output=output)
 
-        # Freeze all layers 
+        # BatchNormalization Layers need to be trainable
         for layer in mod_conv.layers:
-            if layer.name in ['res5c_branch2b', 'res5c_branch2c', 'activation_97']:
+            if isinstance(layer, BatchNormalization):
                 layer.trainable = True
             else:
                 layer.trainable = False
+
+        for layer in mod_conv.layers:
+            if layer.name in ['res5c_branch2b', 'res5c_branch2c', 'activation_97'] :
+                layer.trainable = True
 
         # Add the resnet convolutional base model
         model.add(mod_conv)
@@ -73,7 +82,7 @@ def build_model(xsize=224, ysize=224, channels=3, nlabels=2, lr=0.000001, bn=Fal
         mod_conv = InceptionV3(weights='imagenet', include_top=False, input_shape=(xsize, ysize, channels))
 
         # Freeze the layers except the last 4 layers
-        for layer in mod_conv.layers:
+        for layer in mod_conv.layers[:-4]:
             layer.trainable = False
 
         # Add the inception convolutional base model
@@ -110,11 +119,11 @@ def build_cnn(model, xsize=224,ysize=224,channels=3,nlabels=2, bn=False, dropout
         use_bias = False
 
     # convolution layers
-    model.add(layers.Conv2D(32, (7,7), use_bias=use_bias, input_shape=(xsize,ysize,channels)))
+    model.add(layers.Conv2D(32, (5,5), use_bias=use_bias, input_shape=(xsize,ysize,channels)))
     if bn :
         model.add(layers.BatchNormalization(momentum=0.9))
     model.add(layers.Activation("relu"))
-    model.add(layers.MaxPooling2D((2,2)))
+    model.add(layers.MaxPooling2D((4,4)))
     model.add(layers.Dropout(dropout))
 
     model.add(layers.Conv2D(64, (7,7), use_bias=use_bias, kernel_initializer = 'he_uniform'))
@@ -169,6 +178,10 @@ def main():
     data_train = ImageDataGenerator()
     data_val = ImageDataGenerator()
 
+    if options.model == "resnet" :
+        global bsize 
+        bsize = 32
+
     # Load images for training
     train_it = data_train.flow_from_directory(
         directory=r"./InputImages/train",
@@ -177,7 +190,7 @@ def main():
         batch_size=bsize,
         class_mode="categorical",
         shuffle=True,
-        seed=2
+        seed=32
     )
 
     # Load images for validation
@@ -190,6 +203,9 @@ def main():
         shuffle=False,
         seed=42
     )
+
+
+    
 
     # Create CNN model 
     model = build_model(lr=float(options.learning), bn=options.bn, dropout=options.dropout, mtype=options.model)
@@ -222,11 +238,16 @@ def main():
         tensorboard = TrainValTensorBoard(log_dir=logs_dir, write_graph=True, update_freq=500, val=val_it)
 
         # Run the model 
-        history = model.fit_generator(train_it, epochs = int(options.epochs), steps_per_epoch=STEP_SIZE_TRAIN, validation_steps=STEP_SIZE_VALID, validation_data=val_it, callbacks=[tensorboard])
+        history = model.fit_generator(train_it, epochs = int(options.epochs), steps_per_epoch=STEP_SIZE_TRAIN, validation_steps=STEP_SIZE_VALID, validation_data=val_it, callbacks=[tensorboard], shuffle=True)
     
         # Save model training
-        model_weights_path = now.strftime('weights_'+options.model+'.%d%m%H%M.h5')
-        model.save_weights(model_weights_path)
+        model_weights_path = now.strftime('weights_'+options.model+'.%d%m%H%M')
+        model.save_weights(model_weights_path+".h5")
+
+        # serialize model to JSON
+        model_json = model.to_json()
+        with open(model_weights_path+".json", "w") as json_file:
+            json_file.write(model_json)
 
     
     printWrong = False

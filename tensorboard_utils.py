@@ -109,10 +109,10 @@ class TrainValTensorBoard(TensorBoard):
         # be plotted on the same figure with the training metrics
 
         # Add Confusion Matrix to Summaries
+        self.val.reset()
         class_labels = list(self.val.class_indices.keys())
         print(class_labels,epoch)
 
-        self.val.reset()
         pred = self.model.predict_generator(self.val)#, self.val.n // self.val.batch_size + 1)
         max_pred = np.argmax(pred, axis=1)
         cnf_mat = confusion_matrix(self.val.classes, max_pred)
