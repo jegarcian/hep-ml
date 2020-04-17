@@ -123,18 +123,18 @@ def build_cnn(model, xsize=224,ysize=224,channels=3,nlabels=2, bn=False, dropout
     if bn :
         model.add(layers.BatchNormalization(momentum=0.9))
     model.add(layers.Activation("relu"))
-    model.add(layers.MaxPooling2D((4,4)))
+    model.add(layers.MaxPooling2D((2,2)))
     model.add(layers.Dropout(dropout))
 
     model.add(layers.Conv2D(64, (7,7), use_bias=use_bias, kernel_initializer = 'he_uniform'))
-    if bn :
+    if not bn :
         model.add(layers.BatchNormalization(momentum=0.9))
     model.add(layers.Activation("relu"))
     model.add(layers.MaxPooling2D((2,2)))
     model.add(layers.Dropout(dropout))
 
     model.add(layers.Conv2D(64, (7,7), use_bias=use_bias, kernel_initializer = 'he_uniform'))
-    if bn :
+    if not bn :
         model.add(layers.BatchNormalization(momentum=0.9))
     model.add(layers.Activation("relu"))
     model.add(layers.MaxPooling2D((2,2)))    
@@ -166,6 +166,10 @@ def main():
     # Set log directory for tensorboard
     now = datetime.datetime.now()
     logs_dir = now.strftime('./logs/%d%m%H%M')
+
+    
+    if not os.path.exists('saves'):
+        os.mkdirs('saves')
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -235,13 +239,13 @@ def main():
 
     if not options.test :
         # Create objects for tensorboard, called by training
-        tensorboard = TrainValTensorBoard(log_dir=logs_dir, write_graph=True, update_freq=500, val=val_it)
+        tensorboard = TrainValTensorBoard(log_dir=logs_dir, mod_name=options.model, write_graph=True, update_freq=500, val=val_it)
 
         # Run the model 
         history = model.fit_generator(train_it, epochs = int(options.epochs), steps_per_epoch=STEP_SIZE_TRAIN, validation_steps=STEP_SIZE_VALID, validation_data=val_it, callbacks=[tensorboard], shuffle=True)
     
         # Save model training
-        model_weights_path = now.strftime('weights_'+options.model+'.%d%m%H%M')
+        model_weights_path = now.strftime('saves/weights_'+options.model+'.%d%m%H%M')
         model.save_weights(model_weights_path+".h5")
 
         # serialize model to JSON
@@ -276,12 +280,6 @@ def main():
                 if val_it.classes[x] != y_pred[x] :
                     print("File : ",val_it.filenames[x], str(val_it.classes[x]), str(y_pred[x]), str(Y_pred[x]))
 
-    #from keras.models import load_model
-    #pred = model.predict_generator(val_it, val_it.n // val_it.batch_size )
-    #max_pred = np.argmax(pred, axis=1)
-    #cnf_mat = confusion_matrix(val_it.classes, max_pred)
-    #print (val_it.classes,pred,max_pred)
-    #print (cnf_mat)
 
 # ====================================================================
 #  __main__

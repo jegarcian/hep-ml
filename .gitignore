@@ -21,6 +21,12 @@
 *.tar
 *.zip
 
+
+# Other #
+############
+*.png
+*.h5
+
 # ROOT #
 ############
 *.root
@@ -37,3 +43,4 @@ results*
 logs*
 tables*
 dataset*
+images*

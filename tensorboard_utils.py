@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import os
+import os, sys, io, datetime
 import numpy as np
 
 from keras.callbacks import TensorBoard
@@ -84,7 +84,7 @@ def plot_confusion_matrix(cm, classes, title='Confusion matrix', tensor_name = '
 
 
 class TrainValTensorBoard(TensorBoard):
-    def __init__(self, log_dir='./logs', val=None, **kwargs):
+    def __init__(self, mod_name="simple",log_dir='./logs', val=None, **kwargs):
         # Make the original `TensorBoard` log to a subdirectory 'training'
         training_log_dir = os.path.join(log_dir, 'training')
         super(TrainValTensorBoard, self).__init__(training_log_dir, **kwargs)
@@ -92,6 +92,7 @@ class TrainValTensorBoard(TensorBoard):
         # Log the validation metrics to a separate subdirectory
         self.val_log_dir = os.path.join(log_dir, 'validation')
         self.val = val
+        self.name = mod_name
         self._samples_seen = 0
         self._samples_seen_at_last_write = 0
         self._current_batch = 0
@@ -107,6 +108,14 @@ class TrainValTensorBoard(TensorBoard):
         # Pop the validation logs and handle them separately with
         # `self.val_writer`. Also rename the keys so that they can
         # be plotted on the same figure with the training metrics
+
+
+        now = datetime.datetime.now()
+        
+        if (epoch + 1) % 10 == 0 :
+            # Save model training
+            model_weights_path = now.strftime('saves/weights_'+self.name+'.%d%m%H%M_'+str(epoch))
+            self.model.save_weights(model_weights_path+".h5")
 
         # Add Confusion Matrix to Summaries
         self.val.reset()
