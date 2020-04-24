@@ -34,8 +34,11 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 def build_model(xsize=224, ysize=224, channels=3, nlabels=2, lr=0.000001, bn=False, dropout=0.5, mtype='vgg'):
 
     from keras.applications.resnet50 import ResNet50
+    from keras.applications.resnet import ResNet101
     from keras.applications.vgg16 import VGG16
+    from keras.applications.vgg19 import VGG19
     from keras.applications.inception_v3 import InceptionV3
+    from keras.applications.xception import Xception
 
     # Create the model
     model = models.Sequential()
@@ -43,12 +46,17 @@ def build_model(xsize=224, ysize=224, channels=3, nlabels=2, lr=0.000001, bn=Fal
     mod_conv = None
     #Load the VGG model
 
-    if not mtype in ['vgg','resnet','inception','simple'] : return False
+    if not mtype in ['vgg','vgg19','resnet','resnet101','inception','xception','simple'] : return False
 
 
-    if mtype == 'vgg' :
-        # Transfer Learning using VGG16
-        mod_conv = VGG16(weights='imagenet', include_top=False, input_shape=(xsize, ysize, channels))
+    if 'vgg' in mtype :
+        
+        if mtype == 'vgg' :
+            # Transfer Learning using VGG16
+            mod_conv = VGG16(weights='imagenet', include_top=False, input_shape=(xsize, ysize, channels))
+        if mtype == 'vgg19' :
+            # Transfer Learning using VGG19
+            mod_conv = VGG19(weights='imagenet', include_top=False, input_shape=(xsize, ysize, channels))
 
         # Freeze the layers except the last 4 layers
         for layer in mod_conv.layers[:-4]:
@@ -57,9 +65,17 @@ def build_model(xsize=224, ysize=224, channels=3, nlabels=2, lr=0.000001, bn=Fal
         # Add the vgg convolutional base model
         model.add(mod_conv)
 
-    if mtype == 'resnet' :
-        # Transfer Learning using ResNet50
-        mod_conv = ResNet50(weights='imagenet', include_top=False, input_shape=(xsize, ysize, channels))
+
+    if 'resnet' in mtype :
+
+        if mtype == 'resnet' :
+            # Transfer Learning using ResNet50
+            mod_conv = ResNet50(weights='imagenet', include_top=False, input_shape=(xsize, ysize, channels))
+
+        if mtype == 'resnet101' :
+            # Transfer Learning using ResNet100
+            mod_conv = ResNet101(weights='imagenet', include_top=False, input_shape=(xsize, ysize, channels))
+
         output = mod_conv.layers[-1].output
         mod_conv = models.Model(mod_conv.input, output=output)
 
@@ -78,15 +94,28 @@ def build_model(xsize=224, ysize=224, channels=3, nlabels=2, lr=0.000001, bn=Fal
         model.add(mod_conv)
 
     if mtype == 'inception' :
+
         # Transfer Learning using Inception V3
-        mod_conv = InceptionV3(weights='imagenet', include_top=False, input_shape=(xsize, ysize, channels))
+        mod_conv = InceptionV3(weights='imagenet', include_top=False, input_shape=(xsize, ysize, channels), classes=nlabels)
 
         # Freeze the layers except the last 4 layers
-        for layer in mod_conv.layers[:-4]:
+        for layer in mod_conv.layers:
             layer.trainable = False
 
         # Add the inception convolutional base model
         model.add(mod_conv)
+
+    if mtype == 'xception' :
+        # Transfer Learning using Xception
+        mod_conv = Xception(weights='imagenet', include_top=False, input_shape=(xsize, ysize, channels))
+
+        # Freeze the layers except the last 4 layers
+        for layer in mod_conv.layers:
+            layer.trainable = False
+
+        # Add the inception convolutional base model
+        model.add(mod_conv)
+
 
     if mtype == 'simple' :
         # Create Custom made CNN
@@ -124,21 +153,21 @@ def build_cnn(model, xsize=224,ysize=224,channels=3,nlabels=2, bn=False, dropout
         model.add(layers.BatchNormalization(momentum=0.9))
     model.add(layers.Activation("relu"))
     model.add(layers.MaxPooling2D((2,2)))
-    model.add(layers.Dropout(dropout))
+    #model.add(layers.Dropout(dropout))
 
     model.add(layers.Conv2D(64, (7,7), use_bias=use_bias, kernel_initializer = 'he_uniform'))
     if not bn :
         model.add(layers.BatchNormalization(momentum=0.9))
     model.add(layers.Activation("relu"))
     model.add(layers.MaxPooling2D((2,2)))
-    model.add(layers.Dropout(dropout))
+    #model.add(layers.Dropout(dropout))
 
     model.add(layers.Conv2D(64, (7,7), use_bias=use_bias, kernel_initializer = 'he_uniform'))
     if not bn :
         model.add(layers.BatchNormalization(momentum=0.9))
     model.add(layers.Activation("relu"))
     model.add(layers.MaxPooling2D((2,2)))    
-    model.add(layers.Dropout(dropout))
+    #model.add(layers.Dropout(dropout))
 
 
 # ====================================================================
@@ -163,6 +192,9 @@ def main():
     (options,args) = parser.parse_args()
     # parser.print_help()
 
+    global wsize, hsize, bsize 
+
+
     # Set log directory for tensorboard
     now = datetime.datetime.now()
     logs_dir = now.strftime('./logs/%d%m%H%M')
@@ -183,8 +215,22 @@ def main():
     data_val = ImageDataGenerator()
 
     if options.model == "resnet" :
-        global bsize 
         bsize = 32
+
+    if options.model == "inception" :
+        wsize = hsize = 299
+        data_train = ImageDataGenerator(preprocessing_function=tf.keras.applications.inception_v3.preprocess_input)
+        data_val = ImageDataGenerator(preprocessing_function=tf.keras.applications.inception_v3.preprocess_input)
+
+    if options.model == "xception" :
+        wsize = hsize = 299
+        data_train = ImageDataGenerator(preprocessing_function=tf.keras.applications.xception.preprocess_input)
+        data_val = ImageDataGenerator(preprocessing_function=tf.keras.applications.xception.preprocess_input)
+
+    if options.model == "simple" :
+        data_train = ImageDataGenerator(rescale=1./255)
+        data_val = ImageDataGenerator(rescale=1./255)
+        
 
     # Load images for training
     train_it = data_train.flow_from_directory(
@@ -212,7 +258,7 @@ def main():
     
 
     # Create CNN model 
-    model = build_model(lr=float(options.learning), bn=options.bn, dropout=options.dropout, mtype=options.model)
+    model = build_model(xsize=wsize, ysize=hsize, lr=float(options.learning), bn=options.bn, dropout=options.dropout, mtype=options.model)
 
     if not model :
         print(" Please, select a valid CNN model")
@@ -221,7 +267,7 @@ def main():
     # Set Steps for training and validation
     if options.batch :
         STEP_SIZE_TRAIN=int(options.batch)
-        STEP_SIZE_VALID=int(options.batch)
+        STEP_SIZE_VALID=val_it.n//val_it.batch_size
     else :
         STEP_SIZE_TRAIN=train_it.n//train_it.batch_size
         STEP_SIZE_VALID=val_it.n//val_it.batch_size
