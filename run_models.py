@@ -213,6 +213,7 @@ def main():
     # create a data generator
     data_train = ImageDataGenerator()
     data_val = ImageDataGenerator()
+    data_test = ImageDataGenerator()
 
     if options.model == "resnet" :
         bsize = 32
@@ -221,15 +222,18 @@ def main():
         wsize = hsize = 299
         data_train = ImageDataGenerator(preprocessing_function=tf.keras.applications.inception_v3.preprocess_input)
         data_val = ImageDataGenerator(preprocessing_function=tf.keras.applications.inception_v3.preprocess_input)
+        data_test = ImageDataGenerator(preprocessing_function=tf.keras.applications.inception_v3.preprocess_input)
 
     if options.model == "xception" :
         wsize = hsize = 299
         data_train = ImageDataGenerator(preprocessing_function=tf.keras.applications.xception.preprocess_input)
         data_val = ImageDataGenerator(preprocessing_function=tf.keras.applications.xception.preprocess_input)
+        data_test = ImageDataGenerator(preprocessing_function=tf.keras.applications.xception.preprocess_input)
 
     if options.model == "simple" :
         data_train = ImageDataGenerator(rescale=1./255)
         data_val = ImageDataGenerator(rescale=1./255)
+        data_test = ImageDataGenerator(rescale=1./255)
         
 
     # Load images for training
@@ -303,28 +307,41 @@ def main():
     printWrong = False
     # Create report 
     if options.report or options.test :
-        target_names = list(val_it.class_indices.keys())
+
+        # Load images for validation
+        test_it = data_test.flow_from_directory(
+            directory=r"./InputImages/test",
+            target_size=(wsize, hsize),
+            color_mode="rgb",
+            batch_size=bsize, 
+            class_mode="categorical",
+            shuffle=False,
+            seed=42
+        )
+
+
+        target_names = list(test_it.class_indices.keys())
         print(" Evaluating Predictions \n")
-        Y_pred = model.predict_generator(val_it)#, val_it.n//val_it.batch_size )
+        Y_pred = model.predict_generator(test_it)#, val_it.n//val_it.batch_size )
         y_pred = np.argmax(Y_pred, axis=1)
 
         from sklearn.metrics import confusion_matrix
         from tensorboard_utils import plot_confusion_matrix
         
         print(" Computing Confusion Matrix \n")
-        cnf_mat = confusion_matrix(val_it.classes, y_pred)
+        cnf_mat = confusion_matrix(test_it.classes, y_pred)
 
         print(cnf_mat)
 
         conf_matrix_norm = plot_confusion_matrix(cm=cnf_mat,classes=target_names,
                                                  normalize=True, tensor_name='Confusion Matrix Normalized',saveImg=True)
         
-        print(classification_report(val_it.classes, y_pred, target_names=target_names))
+        print(classification_report(test_it.classes, y_pred, target_names=target_names))
         
         if printWrong :
             for x in range(0,len(y_pred)) :
-                if val_it.classes[x] != y_pred[x] :
-                    print("File : ",val_it.filenames[x], str(val_it.classes[x]), str(y_pred[x]), str(Y_pred[x]))
+                if test_it.classes[x] != y_pred[x] :
+                    print("File : ",test_it.filenames[x], str(test_it.classes[x]), str(y_pred[x]), str(Y_pred[x]))
 
 
 # ====================================================================
