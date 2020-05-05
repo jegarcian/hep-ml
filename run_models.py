@@ -262,7 +262,7 @@ def main():
     
 
     # Create CNN model 
-    model = build_model(xsize=wsize, ysize=hsize, lr=float(options.learning), bn=options.bn, dropout=options.dropout, mtype=options.model)
+    model = build_model(nlabels=len(train_it.class_indices.keys()), xsize=wsize, ysize=hsize, lr=float(options.learning), bn=options.bn, dropout=options.dropout, mtype=options.model)
 
     if not model :
         print(" Please, select a valid CNN model")

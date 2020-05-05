@@ -139,10 +139,11 @@ class TrainValTensorBoard(TensorBoard):
         label = 'ttbar'
         class_idx  = self.val.class_indices[label]
         pred_prob = pred[:, class_idx]  # prob of that particular class
-        fpr, tpr, thresholds = roc_curve(self.val.classes,pred_prob, pos_label=class_idx)
-        auc = roc_auc_score(self.val.classes,pred_prob)
-        roc_plot = plot_roc_curve(fpr, tpr, auc, label) 
-        self.val_writer.add_summary(roc_plot, epoch) 
+        fpr, tpr, thresholds = roc_curve(self.val.classes, pred_prob, pos_label=class_idx)
+        if len(self.val.class_indices.keys()) < 3: 
+            auc = roc_auc_score(self.val.classes, pred_prob)
+            roc_plot = plot_roc_curve(fpr, tpr, auc, label) 
+            self.val_writer.add_summary(roc_plot, epoch) 
 
         plt.close('all')
 
