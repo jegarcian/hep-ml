@@ -29,6 +29,24 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 
 
 # ====================================================================
+#  Get Classes to train
+# ====================================================================
+def getClasses(directory):
+    
+    classes = []
+    dirs = os.listdir( directory)
+    for d in dirs :
+        if os.path.isdir(directory+"/"+d) :
+            classes.append(d)
+            
+    #classes.sort(key=lambda v: v.upper())
+    classes.sort()
+    
+    return classes
+
+
+
+# ====================================================================
 #  Tranfers Learning models
 # ====================================================================
 def build_model(xsize=224, ysize=224, channels=3, nlabels=2, lr=0.000001, bn=False, dropout=0.5, mtype='vgg'):
@@ -236,6 +254,9 @@ def main():
         data_test = ImageDataGenerator(rescale=1./255)
         
 
+    classes = getClasses("./InputImages/train")
+    print("Using classes :",classes)
+
     # Load images for training
     train_it = data_train.flow_from_directory(
         directory=r"./InputImages/train",
@@ -244,6 +265,7 @@ def main():
         batch_size=bsize,
         class_mode="categorical",
         shuffle=True,
+        classes=classes,
         seed=32
     )
 
@@ -255,11 +277,13 @@ def main():
         batch_size=bsize, 
         class_mode="categorical",
         shuffle=False,
+        classes=classes,
         seed=42
     )
 
-
-    
+    if list(train_it.class_indices.keys()) != classes or list(val_it.class_indices.keys()) != classes :
+        print(" Somehow I did not get the order right!! Exiting...")
+        sys.exit()
 
     # Create CNN model 
     model = build_model(nlabels=len(train_it.class_indices.keys()), xsize=wsize, ysize=hsize, lr=float(options.learning), bn=options.bn, dropout=options.dropout, mtype=options.model)
@@ -308,6 +332,12 @@ def main():
     # Create report 
     if options.report or options.test :
 
+        target_names = list(test_it.class_indices.keys())
+        
+        if target_names != classes :
+            print(" Somehow I did not get the order right!! Exiting...")
+            sys.exit()
+
         # Load images for validation
         test_it = data_test.flow_from_directory(
             directory=r"./InputImages/test",
@@ -316,6 +346,7 @@ def main():
             batch_size=bsize, 
             class_mode="categorical",
             shuffle=False,
+            classes=classes,
             seed=42
         )
 
