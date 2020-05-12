@@ -265,7 +265,6 @@ def main():
         batch_size=bsize,
         class_mode="categorical",
         shuffle=True,
-        classes=classes,
         seed=32
     )
 
@@ -277,13 +276,14 @@ def main():
         batch_size=bsize, 
         class_mode="categorical",
         shuffle=False,
-        classes=classes,
         seed=42
     )
 
-    if list(train_it.class_indices.keys()) != classes or list(val_it.class_indices.keys()) != classes :
-        print(" Somehow I did not get the order right!! Exiting...")
-        sys.exit()
+    if not options.test :
+        if train_it.class_indices != val_it.class_indices :
+            print((train_it.class_indices),(val_it.class_indices))
+            print(" Somehow I did not get the order right!! Exiting...")
+            sys.exit()
 
     # Create CNN model 
     model = build_model(nlabels=len(train_it.class_indices.keys()), xsize=wsize, ysize=hsize, lr=float(options.learning), bn=options.bn, dropout=options.dropout, mtype=options.model)
@@ -328,15 +328,9 @@ def main():
             json_file.write(model_json)
 
     
-    printWrong = False
+    printWrong = True
     # Create report 
     if options.report or options.test :
-
-        target_names = list(test_it.class_indices.keys())
-        
-        if target_names != classes :
-            print(" Somehow I did not get the order right!! Exiting...")
-            sys.exit()
 
         # Load images for validation
         test_it = data_test.flow_from_directory(
@@ -346,12 +340,16 @@ def main():
             batch_size=bsize, 
             class_mode="categorical",
             shuffle=False,
-            classes=classes,
             seed=42
         )
 
+        target_names = sorted(test_it.class_indices, key=test_it.class_indices.get)
 
-        target_names = list(test_it.class_indices.keys())
+        if train_it.class_indices != test_it.class_indices :        
+            print(" Somehow I did not get the order right!! Exiting...")
+            sys.exit()
+
+
         print(" Evaluating Predictions \n")
         Y_pred = model.predict_generator(test_it)#, val_it.n//val_it.batch_size )
         y_pred = np.argmax(Y_pred, axis=1)
@@ -370,11 +368,24 @@ def main():
         print(classification_report(test_it.classes, y_pred, target_names=target_names))
         
         if printWrong :
+            i = 0
+
+            model_wrong_path = now.strftime('logs/wrong_'+options.model+'.%d%m%H%M')
+            wrong_file  = open(model_wrong_path+".txt", "w") 
+
             for x in range(0,len(y_pred)) :
+
                 if test_it.classes[x] != y_pred[x] :
-                    print("File : ",test_it.filenames[x], str(test_it.classes[x]), str(y_pred[x]), str(Y_pred[x]))
-
-
+                    real = target_names[test_it.classes[x]]
+                    pred = target_names[y_pred[x]]
+                    wrong = "File : "+str(test_it.filenames[x])+" -- "+real+"["+str(test_it.classes[x])+"] "+pred+"["+str(y_pred[x])+"]  -- "+str(Y_pred[x])+"\n"
+                    wrong_file.write(wrong)
+                    if i % 1000 == 0 :
+                        print("Example ",wrong)
+                    i += 1
+                
+            print(" Full List Saved at :",model_wrong_path+".txt")
+            wrong_file.close()
 # ====================================================================
 #  __main__
 # ====================================================================
