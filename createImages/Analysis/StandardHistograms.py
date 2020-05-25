@@ -5,12 +5,14 @@ The ranges of these histograms should accomodate most analyses.
 import ROOT
 from array import array
 
-def getStandardHistogram(name): 
-    
+def getStandardHistogram(name):
+
     pt_bins = [0.,10.,20.,30.,50.,100.,250.,500.,1000.,1500.,2000.]
+    pt_bins = [0.,20.,40.,60.,80.,100.,120.,140.,160.,180.,200.,250.,300.,350.,400.,450.,500.]
+
 
     if (name == "etmiss"):          return ROOT.TH1D("etmiss",          "Missing Transverse Momentum;p_{T,Miss} [GeV];Events", len(pt_bins)-1, array('d', pt_bins))
-                                                                        
+
     if (name == "n_jets"):          return ROOT.TH1D("n_jets",          "Number of Jets;N_{jets};Events", 10, -0.5, 9.5)
     if (name == "jet_pt"):          return ROOT.TH1D("jet_pt",          "Jet Transverse Momentum;p_{T}^{jet} [GeV];Jets", len(pt_bins)-1, array('d', pt_bins))
     if (name == "jet_m"):           return ROOT.TH1D("jet_m",           "Jet Mass; m^{jet} [MeV]; Jets", 20, 0, 50)
@@ -40,7 +42,7 @@ def getStandardHistogram(name):
     if (name == "leadlep_etconerel20"): return ROOT.TH1D("leadlep_etconerel20", "Leading Lepton Relative Transverse Energy Isolation; etconerel20^{leadlep}; Leptons", 40, -0.05, 0.2)
     if (name == "leadlep_z0"):          return ROOT.TH1D("leadlep_z0",          "Leading Lepton z0 impact parameter; z_{0}^{leadlep} [mm]; Leptons", 40, -1, 1)
     if (name == "leadlep_d0"):          return ROOT.TH1D("leadlep_d0",          "Leading Lepton d0 impact parameter; d_{0}^{leadlep} [mm]; Leptons", 40, -1, 1)
-                                         
+
     if (name == "traillep_pt"):          return ROOT.TH1D("traillep_pt",          "Trailing Lepton Transverse Momentum;p_{T}^{traillep} [GeV];Leptons", 40, 0, 200)
     if (name == "traillep_eta"):         return ROOT.TH1D("traillep_eta",         "Trailing Lepton Pseudorapidity; #eta^{traillep}; Leptons", 30, -3, 3)
     if (name == "traillep_E"):           return ROOT.TH1D("traillep_E",           "Trailing Lepton Energy; E^{traillep} [GeV]; Leptons", 30, 0, 300)
@@ -93,9 +95,9 @@ def getStandardHistogram(name):
     if (name == "trailtau_phi"):     return ROOT.TH1D("trailtau_phi",     "Trailing Tau Azimuthal Angle ; #phi^{trailtau}; Taus", 32, -3.2, 3.2)
     if (name == "trailtau_nTracks"): return ROOT.TH1D("trailtau_nTracks", "Trailing Tau Number of Tracks; N_{trailtautracks}; Taus", 5, -0.5, 4.5)
     if (name == "trailtau_BDTid"):   return ROOT.TH1D("trailtau_BDTid",   "Trailing Tau BDT score; trailtau BDT score; Taus", 40, 0, 1)
-                                        
+
     if (name == "WtMass"):            return ROOT.TH1D("WtMass",            "Transverse Mass of the W Candidate; M_{T,W} [GeV]; Events", 40, 40, 150)
     if (name == "invMassZ"):          return ROOT.TH1D("invMassZ",          "Invariant Mass of the Z Candidate;M_{ll} [GeV]; Events", 30, 60, 120)
     if (name == "invMassH"):          return ROOT.TH1D("invMassH",          "Invariant Mass of the H Candidate;M_{#gamma#gamma} [GeV]; Events", 30, 95, 155)
-    
+
     return None

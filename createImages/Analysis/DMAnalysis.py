@@ -51,7 +51,7 @@ class DMAnalysis(Analysis.Analysis):
       self.hist_etmiss_max   = self.addHistogram("etmiss_max", ROOT.TH1D("etmiss_max", "Missing Transverse Momentum Max;p_{T,Miss} max [GeV];Events", 20, 0,200))
       self.hist_etmiss_min   = self.addHistogram("etmiss_min", ROOT.TH1D("etmiss_min", "Missing Transverse Momentum Min;p_{T,Miss} min [GeV];Events", 20, 0,200))
   
-  def analyze(self):
+  def analyze(self,createImages=True):
 
       import math
 #      import matplotlib.pyplot as plt
@@ -129,6 +129,10 @@ class DMAnalysis(Analysis.Analysis):
       [self.hist_jetspt_max.Fill(jet.pt()+jet.pt_syst(), weight) for jet in goodJets]
       [self.hist_jetspt_min.Fill(jet.pt()-jet.pt_syst(), weight) for jet in goodJets]
       
+
+      if not createImages :
+        return True
+
 
       VERBOSE = False
       if VERBOSE :

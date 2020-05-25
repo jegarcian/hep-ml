@@ -1,5 +1,6 @@
 Job = {
     "Batch"           : True,
+    "CreateImages"    : True,
     "Analysis"        : "DMAnalysis",
 #    "Fraction"        : 0.025,
     "Fraction"        : 1.0,
@@ -28,8 +29,8 @@ Processes = {
     "single_top_schan"                   : "Input/MC/mc15_13TeV.410020.PwPyEG_P2012_singletop_schan_lept.1lep_raw.root",
 
     # Data
-    "dataA_1lep.root"                    : "Input/Data/dataA_1lep.root",
-    "dataB_1lep.root"                    : "Input/Data/dataB_1lep.root",
-    "dataC_1lep.root"                    : "Input/Data/dataC_1lep.root",
-    "dataD_1lep.root"                    : "Input/Data/dataD_1lep.root"
+    #"dataA_1lep"                        : "Input/Data/dataA_1lep.root",
+    #"dataB_1lep"                        : "Input/Data/dataB_1lep.root",
+    #"dataC_1lep"                        : "Input/Data/dataC_1lep.root",
+    #"dataD_1lep"                        : "Input/Data/dataD_1lep.root"
 }

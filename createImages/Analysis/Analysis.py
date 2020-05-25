@@ -45,11 +45,11 @@ class Analysis(object):
     def initialize(self):
         pass
         
-    def doAnalysis(self):
+    def doAnalysis(self, createImages=True):
         eventinfo = self.Store.getEventInfo()
         weight = eventinfo.scalefactor()*eventinfo.eventWeight() if not self.getIsData() else 1
         self.countEvent("all", weight)
-        if self.analyze():
+        if self.analyze(createImages):
             self.countEvent("final", weight)
         
     def analyze(self):

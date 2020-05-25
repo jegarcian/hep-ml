@@ -32,16 +32,16 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 #  Get Classes to train
 # ====================================================================
 def getClasses(directory):
-    
+
     classes = []
     dirs = os.listdir( directory)
     for d in dirs :
         if os.path.isdir(directory+"/"+d) :
             classes.append(d)
-            
+
     #classes.sort(key=lambda v: v.upper())
     classes.sort()
-    
+
     return classes
 
 
@@ -68,7 +68,7 @@ def build_model(xsize=224, ysize=224, channels=3, nlabels=2, lr=0.000001, bn=Fal
 
 
     if 'vgg' in mtype :
-        
+
         if mtype == 'vgg' :
             # Transfer Learning using VGG16
             mod_conv = VGG16(weights='imagenet', include_top=False, input_shape=(xsize, ysize, channels))
@@ -137,8 +137,8 @@ def build_model(xsize=224, ysize=224, channels=3, nlabels=2, lr=0.000001, bn=Fal
 
     if mtype == 'simple' :
         # Create Custom made CNN
-        build_cnn(model=model, bn=bn, dropout=dropout)        
-        
+        build_cnn(model=model, bn=bn, dropout=dropout)
+
 
     # fully connected layers after 3D to 1D flat
     model.add(layers.Flatten())
@@ -148,10 +148,10 @@ def build_model(xsize=224, ysize=224, channels=3, nlabels=2, lr=0.000001, bn=Fal
     model.add(layers.Dense(nlabels, activation='softmax'))
 
     model.summary()
-    
+
     model.compile(optimizer=optimizers.Adam(lr=lr), loss='categorical_crossentropy', metrics=['accuracy'])
-    
-    return model    
+
+    return model
 
 
 # ====================================================================
@@ -184,7 +184,7 @@ def build_cnn(model, xsize=224,ysize=224,channels=3,nlabels=2, bn=False, dropout
     if not bn :
         model.add(layers.BatchNormalization(momentum=0.9))
     model.add(layers.Activation("relu"))
-    model.add(layers.MaxPooling2D((2,2)))    
+    model.add(layers.MaxPooling2D((2,2)))
     #model.add(layers.Dropout(dropout))
 
 
@@ -210,14 +210,14 @@ def main():
     (options,args) = parser.parse_args()
     # parser.print_help()
 
-    global wsize, hsize, bsize 
+    global wsize, hsize, bsize
 
 
     # Set log directory for tensorboard
     now = datetime.datetime.now()
     logs_dir = now.strftime('./logs/%d%m%H%M')
 
-    
+
     if not os.path.exists('saves'):
         os.mkdirs('saves')
 
@@ -227,7 +227,7 @@ def main():
 
     from keras import backend as K
     K.clear_session()
-    
+
     # create a data generator
     data_train = ImageDataGenerator()
     data_val = ImageDataGenerator()
@@ -252,7 +252,7 @@ def main():
         data_train = ImageDataGenerator(rescale=1./255)
         data_val = ImageDataGenerator(rescale=1./255)
         data_test = ImageDataGenerator(rescale=1./255)
-        
+
 
     classes = getClasses("./InputImages/train")
     print("Using classes :",classes)
@@ -273,7 +273,7 @@ def main():
         directory=r"./InputImages/val",
         target_size=(wsize, hsize),
         color_mode="rgb",
-        batch_size=bsize, 
+        batch_size=bsize,
         class_mode="categorical",
         shuffle=False,
         seed=42
@@ -285,7 +285,7 @@ def main():
             print(" Somehow I did not get the order right!! Exiting...")
             sys.exit()
 
-    # Create CNN model 
+    # Create CNN model
     model = build_model(nlabels=len(train_it.class_indices.keys()), xsize=wsize, ysize=hsize, lr=float(options.learning), bn=options.bn, dropout=options.dropout, mtype=options.model)
 
     if not model :
@@ -299,12 +299,12 @@ def main():
     else :
         STEP_SIZE_TRAIN=train_it.n//train_it.batch_size
         STEP_SIZE_VALID=val_it.n//val_it.batch_size
-    
+
     # Load pre-trained weights if needed
     if options.weights :
         try :
-            print("\n Loading weights : ",options.weights)  
-            model.load_weights(options.weights)  
+            print("\n Loading weights : ",options.weights)
+            model.load_weights(options.weights)
             print(" ... done  \n")
         except :
             print (" Error Loading weights")
@@ -312,12 +312,21 @@ def main():
 
 
     if not options.test :
+
+        model_weights_path = now.strftime('saves/weights_best_'+options.model+'.%d%m%H%M')
+
         # Create objects for tensorboard, called by training
         tensorboard = TrainValTensorBoard(log_dir=logs_dir, mod_name=options.model, write_graph=True, update_freq=500, val=val_it)
 
-        # Run the model 
-        history = model.fit_generator(train_it, epochs = int(options.epochs), steps_per_epoch=STEP_SIZE_TRAIN, validation_steps=STEP_SIZE_VALID, validation_data=val_it, callbacks=[tensorboard], shuffle=True)
-    
+        # Early Stopping
+        es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=5)
+
+        # Saving Best Model
+        mc = ModelCheckpoint(model_weights_path+".h5", monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
+
+        # Run the model
+        history = model.fit_generator(train_it, epochs = int(options.epochs), steps_per_epoch=STEP_SIZE_TRAIN, validation_steps=STEP_SIZE_VALID, validation_data=val_it, callbacks=[tensorboard,es,mc], shuffle=True)
+
         # Save model training
         model_weights_path = now.strftime('saves/weights_'+options.model+'.%d%m%H%M')
         model.save_weights(model_weights_path+".h5")
@@ -327,9 +336,9 @@ def main():
         with open(model_weights_path+".json", "w") as json_file:
             json_file.write(model_json)
 
-    
+
     printWrong = True
-    # Create report 
+    # Create report
     if options.report or options.test :
 
         # Load images for validation
@@ -337,7 +346,7 @@ def main():
             directory=r"./InputImages/test",
             target_size=(wsize, hsize),
             color_mode="rgb",
-            batch_size=bsize, 
+            batch_size=bsize,
             class_mode="categorical",
             shuffle=False,
             seed=42
@@ -345,7 +354,7 @@ def main():
 
         target_names = sorted(test_it.class_indices, key=test_it.class_indices.get)
 
-        if train_it.class_indices != test_it.class_indices :        
+        if train_it.class_indices != test_it.class_indices :
             print(" Somehow I did not get the order right!! Exiting...")
             sys.exit()
 
@@ -356,7 +365,7 @@ def main():
 
         from sklearn.metrics import confusion_matrix
         from tensorboard_utils import plot_confusion_matrix
-        
+
         print(" Computing Confusion Matrix \n")
         cnf_mat = confusion_matrix(test_it.classes, y_pred)
 
@@ -364,14 +373,14 @@ def main():
 
         conf_matrix_norm = plot_confusion_matrix(cm=cnf_mat,classes=target_names,
                                                  normalize=True, tensor_name='Confusion Matrix Normalized',saveImg=True)
-        
+
         print(classification_report(test_it.classes, y_pred, target_names=target_names))
-        
+
         if printWrong :
             i = 0
 
             model_wrong_path = now.strftime('logs/wrong_'+options.model+'.%d%m%H%M')
-            wrong_file  = open(model_wrong_path+".txt", "w") 
+            wrong_file  = open(model_wrong_path+".txt", "w")
 
             for x in range(0,len(y_pred)) :
 
@@ -383,7 +392,7 @@ def main():
                     if i % 1000 == 0 :
                         print("Example ",wrong)
                     i += 1
-                
+
             print(" Full List Saved at :",model_wrong_path+".txt")
             wrong_file.close()
 # ====================================================================

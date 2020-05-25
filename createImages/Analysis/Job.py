@@ -31,6 +31,8 @@ class Job(object):
         self.Analysis      = None
         self.JobStatistics = JobStatistics.JobStatistics(self.Configuration["MaxEvents"], self.Configuration["Batch"])
 
+        self.createImages  = configuration["CreateImages"]
+
     #Setup functions
     def setupTree(self):
         tree = ROOT.TChain("mini")
@@ -70,12 +72,12 @@ class Job(object):
         for n in tqdm(xrange(self.MaxEvents)):
             self.JobStatistics.updateStatus(n)
             self.InputTree.GetEntry(n*step)
-            self.Analysis.doAnalysis()
+            self.Analysis.doAnalysis(self.createImages)
             
     def finalize(self):
         self.JobStatistics.updateStatus(self.MaxEvents, True)
         if not self.Configuration["Batch"]:
-            print ""
+            print ("")
         self.Analysis.doFinalization()
         self.OutputFile.Close()
         self.log("finished successfully. Total time: %4.0fs" % self.JobStatistics.elapsedTime())
@@ -94,7 +96,7 @@ class Job(object):
         self.JobStatistics.setMaxEvents(self.MaxEvents)
 
     def log(self, message):
-        print time.ctime() + " Job " + self.Name + ": " + message
+        print (time.ctime() + " Job " + self.Name + ": " + message)
               
         
 
