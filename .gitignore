@@ -32,10 +32,13 @@
 ############
 *.root
 
-# Logs, txt and emacs generated #
+# Logs, txt and other auto generated #
 ######################
 *.log
 *~
+*._
+.DS_Store
+
 
 # Directories #
 ######################

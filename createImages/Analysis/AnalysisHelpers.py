@@ -98,10 +98,14 @@ def DrawObjectROOT(particle, pt, ptype) :
     if 'mltop' in ptype :
         ellipse.SetLineColor(10000+len(ptype))
         ellipse.SetLineWidth(2)
-        ellipse.SetFillColorAlpha(20000+len(ptype), 0.0)
+#        ellipse.SetFillColorAlpha(20000+len(ptype), 0.0) #Este provoca solapamiento, mejor no usar
+        ellipse.SetFillStyle(0) # Mejor usar este (circunferencias)
     else :
-        ellipse.SetLineWidth(0)       
+#        ellipse.SetLineWidth(2)  #Empty
+        ellipse.SetLineWidth(0)
+#        ellipse.SetLineColor(10000+len(ptype))  #Empty
         ellipse.SetFillColor(20000+len(ptype))
+#        ellipse.SetFillStyle(0)  #Empty
         ellipse.SetFillStyle(1001)
         
     return ellipse

@@ -11,7 +11,7 @@ class TupleReader(object):
     def __init__(self):
         super(TupleReader, self).__init__()
         self.Tree = None
-        
+
     def initializeTuple(self,tree):
         """The initial setup of the caching is done here. Branches in the TTree may be deactivated using SetBranchStatus to
         increase readout speed. Only necessary branches are activated and their contents are bound to datamembers of the
@@ -20,11 +20,11 @@ class TupleReader(object):
         self.Tree = tree
         self.Tree.SetBranchStatus("*",0)
 
-        #EventInfo 
+        #EventInfo
         self.eventNumber      = self.activate("i", "eventNumber",            1)
         self.runNumber        = self.activate("i", "runNumber" ,             1)
         self.mcWeight         = self.activate("f", "mcWeight",               1)
-                                                                             
+
         self.trigE            = self.activate("b", "trigE",                     1)
         self.trigM            = self.activate("b", "trigM",                     1)
         self.trigP            = self.activate("b", "trigP",                     1)
@@ -36,26 +36,30 @@ class TupleReader(object):
         #self.SF_Photon        = self.activate("f", "scaleFactor_PHOTON",        1)
         self.SF_Tau           = self.activate("f", "scaleFactor_TAU",           1)
         self.SF_BTag          = self.activate("f", "scaleFactor_BTAG",          1)
-        self.SF_LepTrigger    = self.activate("f", "scaleFactor_LepTRIGGER",    1) 
+        self.SF_LepTrigger    = self.activate("f", "scaleFactor_LepTRIGGER",    1)
         #self.SF_PhotonTrigger = self.activate("f", "scaleFactor_PhotonTRIGGER", 1)
         #self.SF_TauTrigger    = self.activate("f", "scaleFactor_TauTRIGGER",    1)
         #self.SF_DiTauTrigger  = self.activate("f", "scaleFactor_DiTauTRIGGER",  1)
 
+        # Extra Information
+        self.dsid = str(self.Tree.GetCurrentFile().GetName()).split(".")[1]
+        self.filename = str(self.Tree.GetCurrentFile().GetName()).split("/")[-1]
+
         self.EventInfo = EventInfo(self)
-        
+
 
         #LeptonInfo
         max_Lep = self.GetMaximum("lep_n")
         max_Lep = min(abs(max_Lep), 20)
         self.Lep_n         = self.activate("i", "lep_n",                    1)
-        self.Lep_pt        = self.activate("f", "lep_pt",                   max_Lep) 
-        self.Lep_eta       = self.activate("f", "lep_eta",                  max_Lep) 
+        self.Lep_pt        = self.activate("f", "lep_pt",                   max_Lep)
+        self.Lep_eta       = self.activate("f", "lep_eta",                  max_Lep)
         self.Lep_phi       = self.activate("f", "lep_phi",                  max_Lep)
         self.Lep_e         = self.activate("f", "lep_E",                    max_Lep)
         self.Lep_pdgid     = self.activate("i", "lep_type",                 max_Lep)
         self.Lep_charge    = self.activate("i", "lep_charge",               max_Lep)
         self.Lep_ptcone30  = self.activate("f", "lep_ptcone30",             max_Lep)
-        self.Lep_etcone20  = self.activate("f", "lep_etcone20",             max_Lep)                    
+        self.Lep_etcone20  = self.activate("f", "lep_etcone20",             max_Lep)
         self.Lep_d0        = self.activate("f", "lep_trackd0pvunbiased",    max_Lep)
         self.Lep_d0Sig     = self.activate("f", "lep_tracksigd0pvunbiased", max_Lep)
         self.Lep_trigMatch = self.activate("b", "lep_trigMatched",          max_Lep)
@@ -79,7 +83,7 @@ class TupleReader(object):
         self.Photon_pt_syst   = self.activate("f", "photon_pt_syst",   max_Photon)
 
         self.Photons = [Photon(i,self) for i in range(0,max_Photon)]
-         
+
         #JetInfo
         max_Jet = self.GetMaximum("jet_n")
         max_Jet = min(abs(max_Jet), 20)
@@ -89,12 +93,12 @@ class TupleReader(object):
         self.Jet_e        = self.activate("f", "jet_E",        max_Jet)
         self.Jet_phi      = self.activate("f", "jet_phi",      max_Jet)
         self.Jet_jvt      = self.activate("f", "jet_jvt",      max_Jet)
-        self.Jet_mv2c10   = self.activate("f", "jet_MV2c10",   max_Jet) 
+        self.Jet_mv2c10   = self.activate("f", "jet_MV2c10",   max_Jet)
         self.Jet_pt_syst  = self.activate("f", "jet_pt_syst",  max_Jet)
-         
+
         self.Jets = [Jet(i, self) for i in range(0,max_Jet)]
 
-        #FatJetInfo                                                                                 
+        #FatJetInfo
         max_FatJet = self.GetMaximum("fatjet_n")
         max_FatJet = min(abs(max_FatJet), 20)
         self.FatJet_n       = self.activate("i", "fatjet_n",       1)
@@ -109,7 +113,7 @@ class TupleReader(object):
 
         self.FatJets = [FatJet(i, self) for i in range(0,max_FatJet)]
 
-        #TauInfo                                                                                                                                
+        #TauInfo
         max_Tau = self.GetMaximum("tau_n")
         max_Tau = min(abs(max_Tau), 20)
         self.Tau_n         = self.activate("i", "tau_n",         1)
@@ -129,42 +133,42 @@ class TupleReader(object):
         self.Met_et      = self.activate( "f", "met_et",      1)
         self.Met_phi     = self.activate( "f", "met_phi",     1)
         self.Met_et_syst = self.activate( "f", "met_et_syst", 1)
-        
+
         self.EtMiss = EtMiss(self)
-                
-                
+
+
     def activate(self, vartype,  branchname, maxlength):
         self.Tree.SetBranchStatus(branchname,1)
         if (type(self.Tree.GetBranch(branchname))==ROOT.TBranchElement):
-            if vartype=="f": 
+            if vartype=="f":
                 variable = ROOT.vector('float')()
             elif vartype=="i":
                 variable = ROOT.vector('int')()
             elif vartype=="b":
                 variable = ROOT.vector('bool')()
-        else: 
+        else:
             variable = array(vartype,[0]*maxlength)
-        self.Tree.SetBranchAddress( branchname, variable)           
+        self.Tree.SetBranchAddress( branchname, variable)
         return variable
-    
+
     # Used for a quick scan to get the largest value encountered in the tuple
     def GetMaximum(self,branchname):
         self.Tree.SetBranchStatus(branchname,1)
         return int(self.Tree.GetMaximum(branchname))
-    
+
     # Functions to retrieve object collections (Tuplereader is called Store in the analysis code)
     def getEtMiss(self):
         return self.EtMiss
-        
+
     def getEventInfo(self):
         return self.EventInfo
-        
+
     def getLeptons(self):
         return self.Leptons[:self.Lep_n[0]]
 
     def getPhotons(self):
         return self.Photons[:self.Photon_n[0]]
-    
+
     def getJets(self):
         return self.Jets[:self.Jet_n[0]]
 
@@ -185,14 +189,14 @@ class EtMiss(object):
         super(EtMiss, self).__init__()
         self.Branches = branches
         self._tlv     = None
-    
+
     def tlv(self):
       if self._tlv == None:
         self._tlv = ROOT.TLorentzVector()
       if self.et() != self._tlv.Pt():
         self._tlv.SetPtEtaPhiE(self.et(), 0, self.phi(), self.et())
       return self._tlv
-    
+
     def et(self):
       return self.Branches.Met_et[0]*0.001
 
@@ -211,7 +215,7 @@ class EventInfo(object):
     """EventInfo class holding information about the event
     Information that can be accessed may either be metadata about the event (eventNumber, runNumber),
     information regarding the weight an event has (eventWeight, scalefactor, mcWeight, primaryVertexPosition) or
-    information that may be used for selection purposes (passGRL, hasGoodVertex, numberofVertices, triggeredByElectron, 
+    information that may be used for selection purposes (passGRL, hasGoodVertex, numberofVertices, triggeredByElectron,
     triggeredByMuon)
     """
     def __init__(self, branches):
@@ -235,7 +239,7 @@ class EventInfo(object):
 
     def mcWeight(self):
       return self.Branches.mcWeight[0]
-    
+
     def triggeredByElectron(self):
       return self.Branches.trigE[0]
 
@@ -258,7 +262,7 @@ class EventInfo(object):
 #===========================================================
 
 class Lepton(object):
-    """Leptons may either be electrons or muons (checkable via the pdgId, 11 is for electrons, 13 for muons, 
+    """Leptons may either be electrons or muons (checkable via the pdgId, 11 is for electrons, 13 for muons,
     negative values signify anti-particles) Accessible information includes the kinematics (pt, eta, phi, e),
     the quality of the reconstruction result (isTightID), and auxillary information
     (pdgId, charge, isolation variables like isoptcone30, d0, z0...).
@@ -275,7 +279,7 @@ class Lepton(object):
       if self.pt() != self._tlv.Pt():
         self._tlv.SetPtEtaPhiE(self.pt(), self.eta(), self.phi(), self.e())
       return self._tlv
-      
+
     def pt(self):
       return self.Branches.Lep_pt[self.idNr]*0.001
 
@@ -297,18 +301,18 @@ class Lepton(object):
 
     def pdgId(self):
       return self.Branches.Lep_pdgid[self.idNr]
- 
+
     def charge(self):
       return self.Branches.Lep_charge[self.idNr]
-    
+
     def isoptcone30(self):
-      return self.Branches.Lep_ptcone30[self.idNr]                
+      return self.Branches.Lep_ptcone30[self.idNr]
 
     def isoetcone20(self):
-      return self.Branches.Lep_etcone20[self.idNr]                
+      return self.Branches.Lep_etcone20[self.idNr]
 
     def isoptconerel30(self):
-      return self.Branches.Lep_ptcone30[self.idNr]/self.Branches.Lep_pt[self.idNr]                
+      return self.Branches.Lep_ptcone30[self.idNr]/self.Branches.Lep_pt[self.idNr]
 
     def isoptconerel30_max(self):
       if self.Branches.SF_Pileup == array('f', [0.0]): return self.Branches.Lep_ptcone30[self.idNr]/self.Branches.Lep_pt[self.idNr]
@@ -319,7 +323,7 @@ class Lepton(object):
       else: return self.Branches.Lep_ptcone30[self.idNr]/(self.Branches.Lep_pt[self.idNr]+self.Branches.Lep_pt_syst[self.idNr])
 
     def isoetconerel20(self):
-      return self.Branches.Lep_etcone20[self.idNr]/self.Branches.Lep_pt[self.idNr]                
+      return self.Branches.Lep_etcone20[self.idNr]/self.Branches.Lep_pt[self.idNr]
 
     def isoetconerel20_max(self):
       if self.Branches.SF_Pileup == array('f', [0.0]): return self.Branches.Lep_etcone20[self.idNr]/self.Branches.Lep_pt[self.idNr]
@@ -331,25 +335,25 @@ class Lepton(object):
 
     def d0(self):
       return self.Branches.Lep_d0[self.idNr]
-    
+
     def d0Significance(self):
       return self.Branches.Lep_d0Sig[self.idNr]
-    
+
     def isTriggerMatched(self):
       return self.Branches.Lep_trigMatch[self.idNr]
 
     def z0(self):
       return self.Branches.Lep_z0[self.idNr]
-         
+
     def __str__(self):
         return "Lepton %d: pdgId: %d  pt: %4.3f  eta: %4.3f  phi: %4.3f" % (self.idNr, self.pdgId(), self.pt(), self.eta(), self.phi())
-        
+
 #===========================================================
 
 class Photon(object):
-    """Accessible information includes the kinematics (pt, eta, phi, e),                              
-    the quality of the reconstruction result (isTightID), and auxillary information                                                          
-    (isolation variables like isoptcone30...).                                                                      
+    """Accessible information includes the kinematics (pt, eta, phi, e),
+    the quality of the reconstruction result (isTightID), and auxillary information
+    (isolation variables like isoptcone30...).
     """
     def __init__(self, idNr, branches):
         super(Photon, self).__init__()
@@ -414,7 +418,7 @@ class Photon(object):
     def __str__(self):
         return "Photon %d: pt: %4.3f  eta: %4.3f  phi: %4.3f" % (self.idNr, self.pt(), self.eta(), self.phi())
 
-#=========================================================== 
+#===========================================================
 
 class Jet(object):
     """Jet objects have accessors regarding their kinematic information (pt, eta, phi, e), their properties (m), and
@@ -433,7 +437,7 @@ class Jet(object):
       if self.pt() != self._tlv.Pt():
         self._tlv.SetPtEtaPhiE(self.pt(), self.eta(), self.phi(), self.e())
       return self._tlv
-    
+
     def pt(self):
       return self.Branches.Jet_pt[self.idNr]*0.001
 
@@ -443,22 +447,22 @@ class Jet(object):
     def pt_syst(self):
       if self.Branches.SF_Pileup == array('f', [0.0]): return 0
       else: return self.Branches.Jet_pt_syst[self.idNr]*0.001
-    
+
     def eta(self):
       return self.Branches.Jet_eta[self.idNr]
-    
+
     def phi(self):
       return self.Branches.Jet_phi[self.idNr]
-    
+
     def e(self):
       return self.Branches.Jet_e[self.idNr]*0.001
-    
+
     def m(self):
-      return self.tlv().M() 
+      return self.tlv().M()
 
     def mv2c10(self):
-      return self.Branches.Jet_mv2c10[self.idNr] 
-      
+      return self.Branches.Jet_mv2c10[self.idNr]
+
     def jvt(self):
       return self.Branches.Jet_jvt[self.idNr]
 
@@ -467,17 +471,17 @@ class Jet(object):
 
     def isTrueJet(self):
       return bool(self.Branches.Jet_truthMatched[self.idNr])
-         
+
     def __str__(self):
         return "Jet %d: pt: %4.3f  eta: %4.3f  phi: %4.3f" % (self.idNr, self.pt(), self.eta(), self.phi())
 
 
-#===========================================================                                                                                      
+#===========================================================
 
 class FatJet(object):
-    """Jet objects have accessors regarding their kinematic information (pt, eta, phi, e), their properties (m), and                             
-    auxillary information (mv2c10, jvt). Truth information regarding the flavour of the quark they com from (truepdgid)                          
-    and whether they were matched to a true jet (isTrueJet) is available.                                                                        
+    """Jet objects have accessors regarding their kinematic information (pt, eta, phi, e), their properties (m), and
+    auxillary information (mv2c10, jvt). Truth information regarding the flavour of the quark they com from (truepdgid)
+    and whether they were matched to a true jet (isTrueJet) is available.
     """
     def __init__(self, idNr, branches):
         super(FatJet, self).__init__()
@@ -524,12 +528,12 @@ class FatJet(object):
         return "FatJet %d: pt: %4.3f  eta: %4.3f  phi: %4.3f" % (self.idNr, self.pt(), self.eta(), self.phi())
 
 
-#===========================================================                                                                                      
+#===========================================================
 
 class Tau(object):
-    """Jet objects have accessors regarding their kinematic information (pt, eta, phi, e), their properties (m), and                             
-    auxillary information (mv2c10, jvt). Truth information regarding the flavour of the quark they com from (truepdgid)                          
-    and whether they were matched to a true jet (isTrueJet) is available.                                                                        
+    """Jet objects have accessors regarding their kinematic information (pt, eta, phi, e), their properties (m), and
+    auxillary information (mv2c10, jvt). Truth information regarding the flavour of the quark they com from (truepdgid)
+    and whether they were matched to a true jet (isTrueJet) is available.
     """
     def __init__(self, idNr, branches):
         super(Tau, self).__init__()
@@ -577,4 +581,3 @@ class Tau(object):
 
 
 #===========================================================
-
