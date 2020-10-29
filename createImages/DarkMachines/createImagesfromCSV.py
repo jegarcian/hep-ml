@@ -130,7 +130,7 @@ def main():
     parser.add_option("-f", "--input",        dest="infile",                       help="Input File (default: %default)")
     parser.add_option("-o", "--outdir",       dest="outdir",                       help="Out Directory (default: %default)")
     parser.add_option("-v", "--verbose",      dest="verbose", action="store_true", help="print more information (default: %default)")
-    parser.set_defaults(verbose=True, infile='ttbar_10fb_filter.csv', outdir="imagesDir")
+    parser.set_defaults(verbose=True, infile='/data/HEPML/DarkMachines/ttbar_10fb_filter.csv', outdir="imagesDir")
     (options,args) = parser.parse_args()
 
     Save = True
