@@ -96,8 +96,9 @@ def getStandardHistogram(name):
     if (name == "trailtau_nTracks"): return ROOT.TH1D("trailtau_nTracks", "Trailing Tau Number of Tracks; N_{trailtautracks}; Taus", 5, -0.5, 4.5)
     if (name == "trailtau_BDTid"):   return ROOT.TH1D("trailtau_BDTid",   "Trailing Tau BDT score; trailtau BDT score; Taus", 40, 0, 1)
 
-    if (name == "WtMass"):            return ROOT.TH1D("WtMass",            "Transverse Mass of the W Candidate; M_{T,W} [GeV]; Events", 40, 40, 150)
-    if (name == "invMassZ"):          return ROOT.TH1D("invMassZ",          "Invariant Mass of the Z Candidate;M_{ll} [GeV]; Events", 30, 60, 120)
+    if (name == "WtMass"):            return ROOT.TH1D("WtMass",            "Transverse Mass of the W Candidate; M_{T,W} [GeV]; Events", len(pt_bins)-1, array('d', pt_bins))
+    if (name == "mtop"):              return ROOT.TH1D("mtop",              "Invariant Mass of the lepton and b-jet; m_{lb} [GeV]; Events", len(pt_bins)-1, array('d', pt_bins))
+    if (name == "invMassZ"):          return ROOT.TH1D("invMassZ",          "Invariant Mass of the Z Candidate; M_{ll} [GeV]; Events", 30, 60, 120)
     if (name == "invMassH"):          return ROOT.TH1D("invMassH",          "Invariant Mass of the H Candidate;M_{#gamma#gamma} [GeV]; Events", 30, 95, 155)
 
     return None

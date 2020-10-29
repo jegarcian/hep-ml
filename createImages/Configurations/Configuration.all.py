@@ -9,6 +9,7 @@ Job = {
     "ImagesDirectory" : "images/"
 }
 
+'''
 Processes = {
 
     # Diboson processes merged
@@ -34,6 +35,7 @@ Processes = {
     "dataC_1lep"                        : "Input/Data/dataC_1lep.root",
     "dataD_1lep"                        : "Input/Data/dataD_1lep.root"
 }
+'''
 
 Processes = {
 

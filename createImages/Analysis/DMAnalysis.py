@@ -21,6 +21,7 @@ class DMAnalysis(Analysis.Analysis):
 
   def initialize(self):
       self.hist_WtMass       =  self.addStandardHistogram("WtMass")
+      self.hist_mlb          =  self.addStandardHistogram("mtop")
       self.hist_WtMass_max   =  self.addHistogram("WtMass_max", ROOT.TH1D("WtMass_max", "Transverse Mass of the W Candidate Max; M_{T,W} max [GeV]; Events", 40, 0, 200))
       self.hist_WtMass_min   =  self.addHistogram("WtMass_min", ROOT.TH1D("WtMass_min", "Transverse Mass of the W Candidate Min; M_{T,W} min [GeV]; Events", 40, 0, 200))
 
@@ -132,10 +133,19 @@ class DMAnalysis(Analysis.Analysis):
       [self.hist_jetspt_max.Fill(jet.pt()+jet.pt_syst(), weight) for jet in goodJets]
       [self.hist_jetspt_min.Fill(jet.pt()-jet.pt_syst(), weight) for jet in goodJets]
 
-      try :
-        events_file = open("results/"+self.Store.filename.replace("root","csv"),"a+")
-      except :
-        pass
+
+      # Fill Histograms
+      for jet in goodJets :
+          if jet.mv2c10() > 0.8244273 :
+              self.hist_mlb.Fill(AH.mlb(jet,leadlepton),weight)
+
+      saveCSV = False
+
+      if saveCSV :
+          try :
+              events_file = open("results/"+self.Store.filename.replace("root","csv"),"a+")
+          except :
+              pass
 
       csv_row = str(self.Store.dsid)+","+str(eventinfo.eventNumber())
 
@@ -215,16 +225,19 @@ class DMAnalysis(Analysis.Analysis):
         csv_lep = (","+sfloat(leadlepton.pt())+","+sfloat(leadlepton.phi())+","+sfloat(leadlepton.eta())+","+ sfloat(leadlepton.e()))
 
         csv_row += csv_met+csv_lep+csv_jets+"\n"
-        events_file.write(csv_row)
-        events_file.close()
 
+        if saveCSV :
+            events_file.write(csv_row)
+            events_file.close()
+
+        '''
         #'event_numEvent.jpg'
         img = TASImage()
         img.FromPad(c1);
         img.SetImageQuality(3)
         img.SetImageCompression(50)
         img.WriteImage(image_name);
-
+'''
         del c1, jets, elj, ell, elmet, ecol, fcol
 
       else :
@@ -250,6 +263,7 @@ class DMAnalysis(Analysis.Analysis):
           if jet.mv2c10() > 0.8244273 :
             ax.add_artist(AH.DrawObject(jet, scalePt, "bjet"))
             ax.add_artist(AH.DrawObject(jet, scalePt+AH.mlb(jet,leadlepton), "top"))
+            
           else :
             ax.add_artist(AH.DrawObject(jet, scalePt, "jet"))
 

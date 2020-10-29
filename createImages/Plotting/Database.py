@@ -49,6 +49,7 @@ def UpdateDataBase(configuration, histogramName):
 def getHistogram(subcontribution, doScaling):
     # Check whether root file has been opened yet and add it to dictionary of root files
     if subcontribution not in rootFiles:
+      print(subcontribution)
       rootFiles[subcontribution] = ROOT.TFile.Open( "%s/%s.root" % (config["InputDirectory"], subcontribution), "READ")
       return getHistogram(subcontribution, doScaling)
 

@@ -37,23 +37,30 @@ class MainDepiction(Depiction):
     """
     def __init__(self, configuration, name):
         super(MainDepiction, self).__init__(configuration, name)
-        
+
     def drawDepiction(self, paintables):
         self.pad.cd()
         if "log_y" in DB.histoptions: self.pad.SetLogy(int(DB.histoptions["log_y"]))
         paintablesToPaint = [paintables[key] for key in self.PaintingOrder]
         margin = DB.histoptions.get("y_margin", 0.1)
         maximum = max(item.getMaximum() for item in paintablesToPaint)*(margin+1)
-        if "log_y" in DB.histoptions: maximum = maximum*100
+        minimum = 0.1
+        if "log_y" in DB.histoptions:
+            maximum = maximum*100
+            minimum = 100.0
+
+        print(minimum)
+        print(maximum)
         paintablesToPaint[0].getHistogram().SetMaximum(maximum)
-        paintablesToPaint[0].getHistogram().SetMinimum(0.1)
+        paintablesToPaint[0].getHistogram().SetMinimum(minimum)
+        self.pad.Update()
         #print(paintablesToPaint[0].getHistogram().Integral()) #Integral of MC
         #print(paintablesToPaint[1].getHistogram().Integral()) #Integral of data
         option = ""
         for paintable in paintablesToPaint:
             paintable.draw(paintable.drawOption + option)
             option = "same"
- 
+
 class RatioDepiction(Depiction):
     """RatioDepiction shows the ratio between the first paintable and the second paintable"""
     def __init__(self, configuration, name):
@@ -62,12 +69,12 @@ class RatioDepiction(Depiction):
     def drawDepiction(self, paintables):
         self.extractRatioHistogram(paintables)
         self.drawRatioHistogram()
-    
+
     def extractRatioHistogram(self, paintables):
         ROOT.TH1.AddDirectory(False)
         self.ratioHistogram = paintables[self.PaintingOrder[0]].getHistogram().Clone()
         self.ratioHistogram.Divide(paintables[self.PaintingOrder[1]].getHistogram())
-    
+
     def drawRatioHistogram(self):
         self.pad.cd()
         self.setBounds()
@@ -83,7 +90,7 @@ class RatioDepiction(Depiction):
         self.ratioHistogram.SetMaximum(histmax*1.1)
         self.ratioHistogram.SetMinimum(0.0)
 
-                
+
 class AgreementDepiction(RatioDepiction):
     """AgreementDepiction shows the ratio between the first paintable and the second paintable with a
     special emphasis of the ratio region around 1.
@@ -96,11 +103,11 @@ class AgreementDepiction(RatioDepiction):
         self.drawRatioHistogram()
         self.drawReferenceLine()
         self.drawOverallAgreement(paintables)
-    
+
     def setBounds(self):
-        self.ratioHistogram.SetMaximum(2)
+        self.ratioHistogram.SetMaximum(1.5)
         self.ratioHistogram.SetMinimum(0.5)
-        
+
     def drawReferenceLine(self):
         self.pad.cd()
         self.line = ROOT.TLine(self.ratioHistogram.GetXaxis().GetXmin(),1, self.ratioHistogram.GetXaxis().GetXmax(), 1)
@@ -114,4 +121,3 @@ class AgreementDepiction(RatioDepiction):
         self.mean = ROOT.TLine(self.ratioHistogram.GetXaxis().GetXmin(),meanvalue, self.ratioHistogram.GetXaxis().GetXmax(), meanvalue)
         self.mean.SetLineStyle(3)
         self.mean.Draw("same")
-                
