@@ -8,7 +8,7 @@ import numpy as np
 from keras import layers, models, optimizers, initializers
 from keras import models
 from keras import optimizers
-from keras.callbacks import TensorBoard
+from keras.callbacks import TensorBoard, EarlyStopping, ModelCheckpoint
 from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 from keras.layers.normalization import BatchNormalization
@@ -219,7 +219,7 @@ def main():
 
 
     if not os.path.exists('saves'):
-        os.mkdirs('saves')
+        os.mkdir('saves')
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True

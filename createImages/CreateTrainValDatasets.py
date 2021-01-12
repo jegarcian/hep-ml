@@ -11,12 +11,12 @@ def main():
     parser.add_option("-o","--outdir",    dest="outdir",          help="Output directory for csv (default: %default)")
     parser.add_option("-r","--ratio",     dest="ratio",           help="ratio for training (default: %default)")
     parser.add_option("-t","--total",     dest="total",           help="total images per category (default: %default)")
-    parser.set_defaults(indir="images", outdir="../InputImages", ratio="0.7,0.1,0.2", total=74000)
+    parser.set_defaults(indir="DarkMachines/images", outdir="../InputImages", ratio="0.7,0.1,0.2", total=74000)
     (options,args) = parser.parse_args()
 
-    bkg_types = {'ttbar' : 0, 'Wjets' : 1}
-    rbkg_types = { 0 : 'ttbar',  1 : 'Wjets'}
-    bkg_images = {'ttbar' : 0, 'Wjets' : 0}
+    bkg_types = {'Med2000' : 0, 'tchannel' : 1, 'Wjets' : 2}
+    rbkg_types = { 0 : 'Med2000', 1 : 'tchannel', 2 : 'Wjets'}
+    bkg_images = {'Med2000' : 0, 'tchannel' : 1, 'Wjets' : 2}
 
     f = []
     for (dirpath, dirnames, filenames) in os.walk(options.indir):

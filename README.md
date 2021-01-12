@@ -51,3 +51,29 @@ for examples.
 ## Docker Image
 
 A dockerfile containing needed packages is available at ```DockerFile```.
+
+## Artemisa Setup
+
+To run on artemisa :
+
+   * Setup to load ROOT to create images 
+
+```console
+export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
+setupATLAS;lsetup "root 6.18.04-x86_64-centos7-gcc8-opt" --quiet
+```
+   * Setup to run training :
+ 
+```console
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install keras=2.3.1
+pip install tensorflow==1.15
+pip install sklearn
+pip install matplotlib
+pip install tfplot
+pip install tensorflow-plot
+```
+
+once it has been done once, it only would need the activate part of the the settings. 
