@@ -48,3 +48,5 @@ logs*
 tables*
 dataset*
 images*
+.venv
+InputImages

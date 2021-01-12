@@ -77,3 +77,44 @@ pip install tensorflow-plot
 ```
 
 once it has been done once, it only would need the activate part of the the settings. 
+
+
+##  Artemisa Submission
+
+Two files need to be created to submit jobs: an executable and a submission template. Examples are available __sendJob.sh__ and __runNet.sub__. The content of the files :
+
+~~~bash
+## runNet.sub
+universe = vanilla
+
+executable          = sendJob.sh
+arguments = $(Cluster) $(Process)
+
+log                 = test.log
+output              = outfile.$(Cluster).$(Process).out
+error               = errors.$(Cluster).$(process).err
+
+request_Cpus        = 1
+request_Gpus        = 1
+request_Memory      = 4000
+
+queue 1
+~~~
+
+specifies the needs of the job and the executable that needs to be used. 
+
+~~~bash
+## sendJob.sh
+cd [path_to_code]
+source .venv/bin/activate
+python run_models.py
+deactivate
+~~~
+
+the script __sendJob.sh__ contains the command that will be run in the queue. __IMPORTANT__ this file needs to be executable. To submit just do:
+
+~~~bash
+condor_submit runNet.sub
+~~~
+
+
